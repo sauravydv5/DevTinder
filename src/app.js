@@ -3,10 +3,10 @@ const express = require("express");
 const app = express();
 
 app.get("/", (req, res) => {
-  res.send("hello from dashbord");
+  res.send({ firstName: "saurav", lastName: "yadav" });
 });
-app.get("/test", (req, res) => {
-  res.send("hello from ");
+app.use("/test", (req, res) => {
+  res.send("hello from test ");
 });
 app.get("/hello", (req, res) => {
   res.send("hello hello ");
