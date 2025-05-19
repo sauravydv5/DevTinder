@@ -1,20 +1,59 @@
 const express = require("express");
 const connectDB = require("./config/database");
-
 const app = express();
-
 const User = require("./models/userModel");
+const { validateSignUpData } = require("./utils/validation");
+const bcrypt = require("bcrypt");
 
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-  // creating a new instane of the user model
-  const user = new User(req.body);
   try {
+    //Validate of data...
+
+    validateSignUpData(req.body);
+
+    const { firstName, lastName, email, password } = req.body;
+
+    //Encrypt the Password
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    // console.log(passwordHash);
+
+    // creating a new instane of the user model
+    const user = new User({
+      firstName,
+      lastName,
+      email,
+      password: passwordHash,
+    });
+
     await user.save();
     res.send("user added sucessfully!");
   } catch (err) {
     res.status(400).send("Error Saving the user:" + err.message);
+  }
+});
+
+//login Api
+
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email: email });
+    if (!user) {
+      throw new Error("Invalid Crendatials..");
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (isPasswordValid) {
+      res.send("Login Sucessfull");
+    } else {
+      throw new Error("Invalid Crendatials..");
+    }
+  } catch (err) {
+    res.status(400).send("ERROR: " + err.message);
   }
 });
 
@@ -59,12 +98,20 @@ app.delete("/user", async (req, res) => {
 
 //update data of the user...
 
-app.patch("/user", async (req, res) => {
-  const userId = req.body.userId;
+app.patch("/user/:userId", async (req, res) => {
+  const userId = req.params?.userId;
   const data = req.body;
   console.log(JSON.stringify(data));
 
   try {
+    const ALLOWED_UPDATE = ["photoUrl", "about", "gender", "age", "skills"];
+
+    const isUpdateAllowed = Object.keys(data).every((k) =>
+      ALLOWED_UPDATE.includes(k)
+    );
+    if (!isUpdateAllowed) {
+      throw new Error("update not Allowed");
+    }
     const updatedUser = await User.findByIdAndUpdate(userId, data, {
       new: true,
       runValidators: true,

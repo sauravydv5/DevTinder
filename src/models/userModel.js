@@ -1,10 +1,13 @@
 const mongoose = require("mongoose");
+const validator = require("validator");
 
 const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
       required: true,
+      minLength: 4,
+      maxLength: 50,
     },
     lastName: {
       type: String,
@@ -15,10 +18,20 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      validate(value) {
+        if (!validator.isEmail(value)) {
+          throw new Error("invalid email address:" + value);
+        }
+      },
     },
     password: {
       type: String,
       required: true,
+      validate(value) {
+        if (!validator.isStrongPassword(value)) {
+          throw new Error("Enter Strong Password..:" + value);
+        }
+      },
     },
     age: {
       type: Number,
@@ -36,6 +49,11 @@ const userSchema = new mongoose.Schema(
     photoUrl: {
       type: String,
       default: "https://www.pnrao.com/?attachment_id=8917",
+      validate(value) {
+        if (!validator.isURL(value)) {
+          throw new Error("invalid photo url:" + value);
+        }
+      },
     },
 
     about: {
