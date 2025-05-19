@@ -5,26 +5,73 @@ const app = express();
 
 const User = require("./models/userModel");
 
-app.post("/signup", async (req, res) => {
-  // const userObj = {
-  //   firstName: "Saurav ",
-  //   lastName: "Kumar",
-  //   email: "saurav@gmail.com",
-  //   password: "Saurav@123",
-  // };
+app.use(express.json());
 
-  //creating a new instane of the user model
-  const user = new User({
-    firstName: "gautam ",
-    lastName: "Kumar",
-    email: "gautam@gmail.com",
-    password: "gautam@123",
-  });
+app.post("/signup", async (req, res) => {
+  // creating a new instane of the user model
+  const user = new User(req.body);
   try {
     await user.save();
     res.send("user added sucessfully!");
   } catch (err) {
     res.status(400).send("Error Saving the user:" + err.message);
+  }
+});
+
+//find user by email.
+app.get("/user", async (req, res) => {
+  const userEmail = req.body.email;
+
+  try {
+    const user = await User.findOne({ email: userEmail });
+    if (users.length === 0) {
+      res.status(404).send("User not found");
+    } else {
+      res.send(user);
+    }
+  } catch (err) {
+    res.status(400).send("Something Went Wrong");
+  }
+});
+
+//Feed Api -  GET/feed - get all the users from the database.
+
+app.get("/feed", async (req, res) => {
+  try {
+    const users = await User.find({});
+    res.send(users);
+  } catch (err) {
+    res.status(400).send("Something Went Wrong");
+  }
+});
+
+//delete data
+app.delete("/user", async (req, res) => {
+  const userId = req.body.userId;
+  try {
+    //const user = await User.findByIdAndDelete({ _id:userId });
+    const user = await User.findByIdAndDelete(userId);
+    res.send("user deleted sucessfully...");
+  } catch (err) {
+    res.status(400).send("Something went wrong");
+  }
+});
+
+//update data of the user...
+
+app.patch("/user", async (req, res) => {
+  const userId = req.body.userId;
+  const data = req.body;
+  console.log(JSON.stringify(data));
+
+  try {
+    const updatedUser = await User.findByIdAndUpdate(userId, data, {
+      new: true,
+    });
+
+    res.send("User updated successfully.");
+  } catch (err) {
+    res.status(500).send("Something went wrong: " + err.message);
   }
 });
 
